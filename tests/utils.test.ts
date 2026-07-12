@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import pickAttrs from '../src/pickAttrs';
 import get from '../src/utils/get';
 import set, { mergeWith, merge } from '../src/utils/set';
@@ -291,11 +293,6 @@ describe('utils', () => {
   describe('pickAttrs', () => {
     const originProps = {
       onClick: null,
-      onPointerDown: null,
-      onAnimationEnd: null,
-      onTransitionEnd: null,
-      onInvalid: null,
-      onToggle: null,
       checked: true,
       'data-my': 1,
       'aria-this': 2,
@@ -306,11 +303,6 @@ describe('utils', () => {
     it('default', () => {
       expect(pickAttrs(originProps)).toEqual({
         onClick: null,
-        onPointerDown: null,
-        onAnimationEnd: null,
-        onTransitionEnd: null,
-        onInvalid: null,
-        onToggle: null,
         checked: true,
         'data-my': 1,
         'aria-this': 2,
@@ -328,11 +320,6 @@ describe('utils', () => {
     it('attr only', () => {
       expect(pickAttrs(originProps, { attr: true })).toEqual({
         onClick: null,
-        onPointerDown: null,
-        onAnimationEnd: null,
-        onTransitionEnd: null,
-        onInvalid: null,
-        onToggle: null,
         checked: true,
         role: 'button',
       });
@@ -344,6 +331,40 @@ describe('utils', () => {
         'aria-this': 2,
         role: 'button',
       });
+    });
+
+    it('eventsName stays in full sync with @types/react', () => {
+      const dts = fs.readFileSync(
+        path.join(
+          path.dirname(require.resolve('@types/react/package.json')),
+          'index.d.ts',
+        ),
+        'utf8',
+      );
+
+      const isCapturePhase = (n: string) =>
+        n.endsWith('Capture') && !/^on(Got|Lost)PointerCapture$/.test(n);
+      const reactEvents = new Set(
+        [...dts.matchAll(/\bon[A-Z]\w*(?=\?:)/g)]
+          .map(m => m[0])
+          .filter(n => !isCapturePhase(n)),
+      );
+
+      const src = fs.readFileSync(
+        path.join(__dirname, '../src/pickAttrs.ts'),
+        'utf8',
+      );
+      const ourEvents = new Set(
+        src
+          .match(/const eventsName = `([\s\S]+?)`/)![1]
+          .split(/\s+/)
+          .filter(Boolean),
+      );
+
+      expect({
+        missing: [...reactEvents].filter(e => !ourEvents.has(e)), // React has, we dropped
+        stale: [...ourEvents].filter(e => !reactEvents.has(e)), //  we have, React removed
+      }).toEqual({ missing: [], stale: [] });
     });
   });
 });
