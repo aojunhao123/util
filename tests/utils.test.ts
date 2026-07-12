@@ -291,6 +291,10 @@ describe('utils', () => {
   describe('pickAttrs', () => {
     const originProps = {
       onClick: null,
+      onPointerDown: null,
+      onAnimationEnd: null,
+      onTransitionEnd: null,
+      onInvalid: null,
       checked: true,
       'data-my': 1,
       'aria-this': 2,
@@ -301,6 +305,10 @@ describe('utils', () => {
     it('default', () => {
       expect(pickAttrs(originProps)).toEqual({
         onClick: null,
+        onPointerDown: null,
+        onAnimationEnd: null,
+        onTransitionEnd: null,
+        onInvalid: null,
         checked: true,
         'data-my': 1,
         'aria-this': 2,
@@ -318,6 +326,10 @@ describe('utils', () => {
     it('attr only', () => {
       expect(pickAttrs(originProps, { attr: true })).toEqual({
         onClick: null,
+        onPointerDown: null,
+        onAnimationEnd: null,
+        onTransitionEnd: null,
+        onInvalid: null,
         checked: true,
         role: 'button',
       });
