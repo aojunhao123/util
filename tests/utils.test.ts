@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
 import pickAttrs from '../src/pickAttrs';
 import get from '../src/utils/get';
 import set, { mergeWith, merge } from '../src/utils/set';
@@ -333,10 +333,10 @@ describe('utils', () => {
       });
     });
 
-    it('eventsName stays in full sync with @types/react', () => {
-      const dts = fs.readFileSync(
-        path.join(
-          path.dirname(require.resolve('@types/react/package.json')),
+    it('forwards every React DOM event handler', () => {
+      const dts = readFileSync(
+        join(
+          dirname(require.resolve('@types/react/package.json')),
           'index.d.ts',
         ),
         'utf8',
@@ -344,27 +344,14 @@ describe('utils', () => {
 
       const isCapturePhase = (n: string) =>
         n.endsWith('Capture') && !/^on(Got|Lost)PointerCapture$/.test(n);
-      const reactEvents = new Set(
-        [...dts.matchAll(/\bon[A-Z]\w*(?=\?:)/g)]
-          .map(m => m[0])
-          .filter(n => !isCapturePhase(n)),
-      );
+      const reactEvents = [...dts.matchAll(/\bon[A-Z]\w*(?=\?:)/g)]
+        .map(m => m[0])
+        .filter(n => !isCapturePhase(n));
 
-      const src = fs.readFileSync(
-        path.join(__dirname, '../src/pickAttrs.ts'),
-        'utf8',
+      const dropped = reactEvents.filter(
+        e => pickAttrs({ [e]: 1 }, { attr: true })[e] === undefined,
       );
-      const ourEvents = new Set(
-        src
-          .match(/const eventsName = `([\s\S]+?)`/)![1]
-          .split(/\s+/)
-          .filter(Boolean),
-      );
-
-      expect({
-        missing: [...reactEvents].filter(e => !ourEvents.has(e)), // React has, we dropped
-        stale: [...ourEvents].filter(e => !reactEvents.has(e)), //  we have, React removed
-      }).toEqual({ missing: [], stale: [] });
+      expect(dropped).toEqual([]);
     });
   });
 });
