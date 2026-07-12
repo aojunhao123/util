@@ -295,6 +295,7 @@ describe('utils', () => {
       onAnimationEnd: null,
       onTransitionEnd: null,
       onInvalid: null,
+      onToggle: null,
       checked: true,
       'data-my': 1,
       'aria-this': 2,
@@ -309,6 +310,7 @@ describe('utils', () => {
         onAnimationEnd: null,
         onTransitionEnd: null,
         onInvalid: null,
+        onToggle: null,
         checked: true,
         'data-my': 1,
         'aria-this': 2,
@@ -330,6 +332,7 @@ describe('utils', () => {
         onAnimationEnd: null,
         onTransitionEnd: null,
         onInvalid: null,
+        onToggle: null,
         checked: true,
         role: 'button',
       });
