@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
 import pickAttrs from '../src/pickAttrs';
 import get from '../src/utils/get';
 import set, { mergeWith, merge } from '../src/utils/set';
@@ -329,6 +331,27 @@ describe('utils', () => {
         'aria-this': 2,
         role: 'button',
       });
+    });
+
+    it('forwards every React DOM event handler', () => {
+      const dts = readFileSync(
+        join(
+          dirname(require.resolve('@types/react/package.json')),
+          'index.d.ts',
+        ),
+        'utf8',
+      );
+
+      const isCapturePhase = (n: string) =>
+        n.endsWith('Capture') && !/^on(Got|Lost)PointerCapture$/.test(n);
+      const reactEvents = [...dts.matchAll(/\bon[A-Z]\w*(?=\?:)/g)]
+        .map(m => m[0])
+        .filter(n => !isCapturePhase(n));
+
+      const dropped = reactEvents.filter(
+        e => pickAttrs({ [e]: 1 }, { attr: true })[e] === undefined,
+      );
+      expect(dropped).toEqual([]);
     });
   });
 });
